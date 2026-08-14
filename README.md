@@ -67,7 +67,25 @@ GTK, WPF, wxWidgets, JUCE, or Slate.
 
 ## Quick start
 
-### Universal installation (`.agents/skills`)
+### Install with Skills CLI (recommended)
+
+Install the skill with one command:
+
+```bash
+npx skills add muhosekerci/imgui-ui-ux-engineering
+```
+
+The Skills CLI detects supported coding agents and installs the skill into the appropriate
+location. This gives the same repository package to compatible clients such as Claude Code,
+Codex, Gemini CLI, GitHub Copilot CLI, OpenCode, Cursor, and other Agent Skills clients.
+
+For a global, non-interactive installation:
+
+```bash
+npx skills add muhosekerci/imgui-ui-ux-engineering -g -y
+```
+
+### Manual universal installation (`.agents/skills`)
 
 The shared `.agents/skills` location is recognized by multiple compatible clients,
 including Gemini CLI, GitHub Copilot CLI, and OpenCode.
@@ -103,10 +121,15 @@ Gemini CLI and GitHub Copilot CLI also provide `/skills reload` in an active ses
 ### Update an existing installation
 
 ```bash
-git -C "$HOME/.agents/skills/imgui-ui-ux-engineering" pull
+npx skills check
+npx skills update
 ```
 
-For a client-specific installation, replace the path with that client's directory.
+For a manually cloned installation, update it with:
+
+```bash
+git -C "$HOME/.agents/skills/imgui-ui-ux-engineering" pull
+```
 
 ### Use the skill
 
