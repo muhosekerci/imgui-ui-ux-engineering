@@ -43,7 +43,7 @@ model provider or one CLI.
 
 | Client | Support path |
 |---|---|
-| [Gemini CLI](https://geminicli.com/docs/cli/using-agent-skills/) | Native Agent Skills support and direct URL installation |
+| [Antigravity CLI](https://antigravity.google/docs/skills) | Native Agent Skills support through `.agents/skills` and the `/skills` browser |
 | [Claude Code](https://code.claude.com/docs/en/skills) | Native Agent Skills support through `.claude/skills` |
 | [GitHub Copilot CLI](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills) | Native Agent Skills support through `.agents/skills`, `.copilot/skills`, or `copilot skill add` |
 | [OpenCode](https://opencode.ai/docs/skills) | Native discovery through `.agents/skills`, `.opencode/skills`, and compatible paths |
@@ -77,7 +77,7 @@ npx skills add muhosekerci/imgui-ui-ux-engineering
 
 The Skills CLI detects supported coding agents and installs the skill into the appropriate
 location. This gives the same repository package to compatible clients such as Claude Code,
-Codex, Gemini CLI, GitHub Copilot CLI, OpenCode, Cursor, and other Agent Skills clients.
+Codex, Antigravity CLI, GitHub Copilot CLI, OpenCode, Cursor, and other Agent Skills clients.
 
 For a global, non-interactive installation:
 
@@ -88,7 +88,7 @@ npx skills add muhosekerci/imgui-ui-ux-engineering -g -y
 ### Manual universal installation (`.agents/skills`)
 
 The shared `.agents/skills` location is recognized by multiple compatible clients,
-including Gemini CLI, GitHub Copilot CLI, and OpenCode.
+including Antigravity CLI, GitHub Copilot CLI, and OpenCode.
 
 #### Windows PowerShell
 
@@ -108,7 +108,7 @@ git clone https://github.com/muhosekerci/imgui-ui-ux-engineering.git \
 
 | Client | Installation |
 |---|---|
-| Gemini CLI | `gemini skills install https://github.com/muhosekerci/imgui-ui-ux-engineering` |
+| Antigravity CLI | Use the Skills CLI command above, or clone into a workspace's `.agents/skills/imgui-ui-ux-engineering` |
 | GitHub Copilot CLI | `copilot skill add https://github.com/muhosekerci/imgui-ui-ux-engineering` |
 | Claude Code | Clone into `~/.claude/skills/imgui-ui-ux-engineering` |
 | OpenCode | Clone into `~/.config/opencode/skills/imgui-ui-ux-engineering` or use `~/.agents/skills` |
@@ -116,7 +116,8 @@ git clone https://github.com/muhosekerci/imgui-ui-ux-engineering.git \
 | Other compatible CLIs | Point the client's skill installer at this repository, or clone it into that client's Agent Skills directory |
 
 Reload or restart the client after installation if it does not support live skill discovery.
-Gemini CLI and GitHub Copilot CLI also provide `/skills reload` in an active session.
+Antigravity CLI provides `/skills` to browse loaded local and global skills; GitHub Copilot
+CLI provides `/skills reload` in an active session.
 
 ### Update an existing installation
 
@@ -170,7 +171,7 @@ Good places to introduce the skill include:
 - Agent Skills directories and client showcases;
 - [Awesome GitHub Copilot](https://github.com/github/awesome-copilot) and [Awesome Codex Skills](https://github.com/ComposioHQ/awesome-codex-skills) through contributions;
 - the [Dear ImGui Discussions](https://github.com/ocornut/imgui/discussions) community;
-- communities for Claude Code, Gemini CLI, GitHub Copilot, Codex, OpenCode, and Dear ImGui;
+- communities for Claude Code, Antigravity CLI, GitHub Copilot, Codex, OpenCode, and Dear ImGui;
 - developer posts on DEV Community, Hashnode, LinkedIn, X, or a Show HN submission;
 - C++ game-tooling, engine-development, editor-tooling, and technical-art communities.
 
