@@ -84,6 +84,42 @@ def check_required_files() -> bool:
     return True
 
 
+def check_agent_skills_frontmatter() -> bool:
+    """Validate the portable Agent Skills fields without adding a YAML dependency."""
+    source = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+    if not source.startswith("---\n") or "\n---\n" not in source[4:]:
+        print("FAIL SKILL.md must begin with a YAML frontmatter block.", file=sys.stderr)
+        return False
+    frontmatter = source.split("\n---\n", 1)[0][4:]
+
+    def scalar(field: str) -> str | None:
+        match = re.search(rf"^{re.escape(field)}:\s*(.+?)\s*$", frontmatter, re.MULTILINE)
+        return match.group(1).strip().strip('"\'') if match else None
+
+    name = scalar("name")
+    description = scalar("description")
+    license_name = scalar("license")
+    compatibility = scalar("compatibility")
+    errors: list[str] = []
+    if name is None or re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name) is None or len(name) > 64:
+        errors.append("name must be 1-64 lowercase alphanumeric/hyphen characters")
+    elif name != SKILL_DIR.name:
+        errors.append(f"name '{name}' must match parent directory '{SKILL_DIR.name}'")
+    if description is None or not 1 <= len(description) <= 1024:
+        errors.append("description must contain 1-1024 characters")
+    if license_name != "MIT":
+        errors.append("license must reference the bundled MIT license")
+    if compatibility is None or not 1 <= len(compatibility) <= 500:
+        errors.append("compatibility must contain 1-500 characters")
+    if not re.search(r"^metadata:\s*$", frontmatter, re.MULTILINE):
+        errors.append("metadata mapping is required for author and index fields")
+    if errors:
+        print(f"FAIL Agent Skills frontmatter: {'; '.join(errors)}", file=sys.stderr)
+        return False
+    print("PASS Agent Skills frontmatter, naming, license, compatibility, and metadata checks.")
+    return True
+
+
 def check_english_and_markers() -> bool:
     turkish_specific = re.compile(r"[\u011f\u00fc\u015f\u0131\u00f6\u00e7\u011e\u00dc\u015e\u0130\u00d6\u00c7]")
     unfinished_marker = "TO" + "DO"
@@ -278,6 +314,7 @@ def main() -> int:
 
     checks = [
         check_required_files(),
+        check_agent_skills_frontmatter(),
         check_english_and_markers(),
         check_skill_size(),
         check_eval_inventory(),

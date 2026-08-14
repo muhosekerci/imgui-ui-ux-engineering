@@ -2,14 +2,19 @@
 
 ![Dear ImGui](https://img.shields.io/badge/Dear%20ImGui-1.92%2B-4c8bf5)
 ![C++](https://img.shields.io/badge/C%2B%2B-17-00599C)
+![Agent Skills](https://img.shields.io/badge/Agent%20Skills-open%20standard-6f42c1)
 ![Semantic evals](https://img.shields.io/badge/semantic%20evals-30%2F30-success)
 [![GitHub](https://img.shields.io/badge/GitHub-muhosekerci-181717?logo=github)](https://github.com/muhosekerci)
 
 Created and maintained by **[muhosekerci](https://github.com/muhosekerci)**.
 
-A production-oriented Codex skill for designing, reviewing, and hardening **Dear ImGui**
+A production-oriented, portable **Agent Skill** for designing, reviewing, and hardening **Dear ImGui**
 tools, editor panels, debugging dashboards, asset browsers, visualization screens, and
 desktop workflows.
+
+The package follows the [Agent Skills open standard](https://agentskills.io/specification)
+and is designed for skills-compatible CLI agents. Codex is one supported client, not a
+requirement or the defining platform.
 
 This skill treats UI improvement as an engineering problem, not a cosmetic reskin. It
 combines information architecture, interaction design, immediate-mode state ownership,
@@ -30,6 +35,24 @@ validation in one reusable workflow.
 | Compatibility | Dear ImGui 1.92+, optional docking, official tag/master compilation, and vendored-header checks |
 | Quality gates | Static scope checking, C++ template compilation, contrast validation, and 15 semantic regression cases |
 
+## Agent and CLI compatibility
+
+This repository uses the portable `SKILL.md` directory format defined by the
+[Agent Skills specification](https://agentskills.io/specification). It does not depend on one
+model provider or one CLI.
+
+| Client | Support path |
+|---|---|
+| [Gemini CLI](https://geminicli.com/docs/cli/using-agent-skills/) | Native Agent Skills support and direct URL installation |
+| [Claude Code](https://code.claude.com/docs/en/skills) | Native Agent Skills support through `.claude/skills` |
+| [GitHub Copilot CLI](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills) | Native Agent Skills support through `.agents/skills`, `.copilot/skills`, or `copilot skill add` |
+| [OpenCode](https://opencode.ai/docs/skills) | Native discovery through `.agents/skills`, `.opencode/skills`, and compatible paths |
+| Codex | Skill-directory installation using the same `SKILL.md` package |
+| Other skills-compatible agents | Install the complete repository in the client's configured skills directory |
+
+Clients that do not yet implement Agent Skills can still load `SKILL.md` as reusable project
+instructions, but automatic discovery and activation depend on that client's capabilities.
+
 ## When the skill activates
 
 The skill is intended for requests that:
@@ -44,39 +67,60 @@ GTK, WPF, wxWidgets, JUCE, or Slate.
 
 ## Quick start
 
-### Install on Windows PowerShell
+### Universal installation (`.agents/skills`)
+
+The shared `.agents/skills` location is recognized by multiple compatible clients,
+including Gemini CLI, GitHub Copilot CLI, and OpenCode.
+
+#### Windows PowerShell
 
 ```powershell
-$codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME ".codex" }
 git clone https://github.com/muhosekerci/imgui-ui-ux-engineering.git `
-  (Join-Path $codexHome "skills\imgui-ui-ux-engineering")
+  (Join-Path $HOME ".agents\skills\imgui-ui-ux-engineering")
 ```
 
-### Install on macOS or Linux
+#### macOS or Linux
 
 ```bash
 git clone https://github.com/muhosekerci/imgui-ui-ux-engineering.git \
-  "${CODEX_HOME:-$HOME/.codex}/skills/imgui-ui-ux-engineering"
+  "$HOME/.agents/skills/imgui-ui-ux-engineering"
 ```
 
-If your Codex setup uses a custom skills directory, clone the repository there instead.
-Reload Codex after installation so it discovers `SKILL.md`.
+### Client-specific installation
+
+| Client | Installation |
+|---|---|
+| Gemini CLI | `gemini skills install https://github.com/muhosekerci/imgui-ui-ux-engineering` |
+| GitHub Copilot CLI | `copilot skill add https://github.com/muhosekerci/imgui-ui-ux-engineering` |
+| Claude Code | Clone into `~/.claude/skills/imgui-ui-ux-engineering` |
+| OpenCode | Clone into `~/.config/opencode/skills/imgui-ui-ux-engineering` or use `~/.agents/skills` |
+| Codex | Clone into `${CODEX_HOME:-$HOME/.codex}/skills/imgui-ui-ux-engineering` |
+| Other compatible CLIs | Point the client's skill installer at this repository, or clone it into that client's Agent Skills directory |
+
+Reload or restart the client after installation if it does not support live skill discovery.
+Gemini CLI and GitHub Copilot CLI also provide `/skills reload` in an active session.
 
 ### Update an existing installation
 
 ```bash
-git -C "${CODEX_HOME:-$HOME/.codex}/skills/imgui-ui-ux-engineering" pull
+git -C "$HOME/.agents/skills/imgui-ui-ux-engineering" pull
 ```
 
-On Windows PowerShell, replace the path with the value created in the installation step.
+For a client-specific installation, replace the path with that client's directory.
 
 ### Use the skill
 
-Invoke the skill by name or submit a Dear ImGui task:
+Skills-compatible agents can activate the skill automatically from the task description.
+You can also name it explicitly using the syntax supported by your client:
 
 ```text
-$imgui-ui-ux-engineering review this asset browser for ID collisions,
-keyboard focus bugs, DPI problems, and performance bottlenecks.
+Use the imgui-ui-ux-engineering skill to review this asset browser for ID
+collisions, keyboard focus bugs, DPI problems, and performance bottlenecks.
+```
+
+```text
+Review this asset browser for ID collisions, keyboard focus bugs, DPI
+problems, and performance bottlenecks using imgui-ui-ux-engineering.
 ```
 
 ```text
@@ -99,10 +143,11 @@ https://github.com/muhosekerci/imgui-ui-ux-engineering
 
 Good places to introduce the skill include:
 
-- the [`codex-skills` GitHub topic](https://github.com/topics/codex-skills);
-- the [Awesome Codex Skills](https://github.com/ComposioHQ/awesome-codex-skills) list through a contribution or pull request;
+- the [`agent-skills`](https://github.com/topics/agent-skills) and [`codex-skills`](https://github.com/topics/codex-skills) GitHub topics;
+- Agent Skills directories and client showcases;
+- [Awesome GitHub Copilot](https://github.com/github/awesome-copilot) and [Awesome Codex Skills](https://github.com/ComposioHQ/awesome-codex-skills) through contributions;
 - the [Dear ImGui Discussions](https://github.com/ocornut/imgui/discussions) community;
-- relevant Reddit communities such as `r/codex`, `r/OpenaiCodex`, and `r/imgui`;
+- communities for Claude Code, Gemini CLI, GitHub Copilot, Codex, OpenCode, and Dear ImGui;
 - developer posts on DEV Community, Hashnode, LinkedIn, X, or a Show HN submission;
 - C++ game-tooling, engine-development, editor-tooling, and technical-art communities.
 
@@ -157,7 +202,7 @@ A workspace starter demonstrating:
 ├── SKILL.md
 ├── README.md
 ├── agents/
-│   └── openai.yaml
+│   └── openai.yaml                  # Optional Codex/OpenAI adapter metadata
 ├── evals/
 │   ├── quality-suite.md
 │   ├── failure-mode-regressions.md
@@ -190,12 +235,13 @@ python scripts/run_quality_suite.py
 The complete gate:
 
 1. validates required package files and unfinished markers;
-2. checks the `SKILL.md` size guard;
-3. verifies theme contrast;
-4. runs the ImGui scope checker against valid and intentionally invalid fixtures;
-5. scores all semantic reference cases at a required **30/30**;
-6. downloads temporary official Dear ImGui `v1.92.0` and `master` sources;
-7. compiles the templates against both with C++17 and warnings as errors.
+2. verifies portable Agent Skills frontmatter and naming constraints;
+3. checks the `SKILL.md` size guard;
+4. verifies theme contrast;
+5. runs the ImGui scope checker against valid and intentionally invalid fixtures;
+6. scores all semantic reference cases at a required **30/30**;
+7. downloads temporary official Dear ImGui `v1.92.0` and `master` sources;
+8. compiles the templates against both with C++17 and warnings as errors.
 
 ### Offline diagnostic gate
 

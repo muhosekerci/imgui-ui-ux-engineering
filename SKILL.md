@@ -1,6 +1,13 @@
 ---
 name: imgui-ui-ux-engineering
 description: Proactively design, improve, or review high-quality Dear ImGui tools, C++ editor panels, game-development interfaces, debugging dashboards, visualization screens, and desktop workflows. Use when Dear ImGui is named or supplied code contains direct evidence such as `ImGui::`, `imgui.h`, `ImGuiContext`, or ImGui backend symbols. For an unlabelled C++ editor/tooling request, use only when the user explicitly asks whether Dear ImGui is suitable; otherwise keep framework choice open. Do not trigger for a task that explicitly names another UI framework such as Qt, GTK, WPF, wxWidgets, JUCE, or Slate. Cover UI architecture, information hierarchy, dockspace layouts, design systems, custom components, UX states, keyboard/gamepad interaction, DPI/fonts, performance, and code quality.
+license: MIT
+compatibility: Portable Agent Skills open-standard package. Works with skills-compatible CLI agents; bundled validation requires Python 3.9+, and complete C++ gates require Git, network access, and a C++17 compiler.
+metadata:
+  author: muhosekerci
+  version: "1.0.0"
+  repository: "https://github.com/muhosekerci/imgui-ui-ux-engineering"
+  keywords: "agent-skills, dear-imgui, imgui, ui-ux, cpp, editor-tools, game-development, code-review, accessibility, dpi, performance"
 ---
 
 # Dear ImGui UI/UX Engineering
