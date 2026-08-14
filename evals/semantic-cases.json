@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "suites": {
+    "standard": {"required_score": 20, "maximum_score": 20},
+    "failure": {"required_score": 10, "maximum_score": 10}
+  },
+  "cases": [
+    {
+      "id": "E01", "suite": "standard",
+      "prompt": "My C++ editor panel is overcrowded. It has a tree on the left, a viewport, and many properties on the right. How should I redesign it?",
+      "assertions": [
+        {"label": "keeps framework choice open", "any": ["framework choice open", "framework is not established"]},
+        {"label": "requires evidence or suitability request", "any": ["direct api/header evidence", "explicit suitability question", "explicitly asks whether dear imgui is suitable"]}
+      ],
+      "fatal": ["dear imgui is definitely", "use dear imgui because"]
+    },
+    {
+      "id": "E02", "suite": "standard",
+      "prompt": "Design a Dear ImGui asset browser for 20,000 records. Users need text filtering, sorting, single selection, and a property inspector.",
+      "assertions": [
+        {"label": "stable ID", "any": ["stable asset id", "stable model id"]},
+        {"label": "derived index view", "any": ["filtered/sorted index view", "filtered and sorted index view"]},
+        {"label": "sort specs", "any": ["imguitablesortspecs"]},
+        {"label": "clipper", "any": ["imguilistclipper"]},
+        {"label": "no-results state", "any": ["no-results", "no results"]},
+        {"label": "selection ownership", "any": ["ui state owns selection", "selection is owned by ui state"]},
+        {"label": "verification", "any": ["verify", "test"]}
+      ]
+    },
+    {
+      "id": "E03", "suite": "standard",
+      "prompt": "Review this loop: for (auto& item : items) ImGui::Checkbox(item.name.c_str(), &item.enabled);",
+      "assertions": [
+        {"label": "collision", "any": ["id collision", "duplicate visible labels"]},
+        {"label": "stable PushID", "any": ["pushid(item.id)", "pushid with a stable"]},
+        {"label": "visible versus unique", "any": ["visible label", "unique id"]}
+      ]
+    },
+    {
+      "id": "E04", "suite": "standard",
+      "prompt": "I call PushStyleColor inside if (warning) and PopStyleColor after the if. Is this safe?",
+      "assertions": [
+        {"label": "branch imbalance", "any": ["branch-dependent stack imbalance", "underflows when warning is false"]},
+        {"label": "balanced correction", "any": ["push and pop inside the same branch", "keep push/pop in the same branch"]},
+        {"label": "verification", "any": ["bundled checker", "runtime debug", "metrics/debug"]}
+      ],
+      "fatal": ["safe as written"]
+    },
+    {
+      "id": "E05", "suite": "standard",
+      "prompt": "My docking-branch tool moves between 100% and 200% DPI monitors. Should I set FontScaleDpi and ConfigDpiScaleFonts?",
+      "assertions": [
+        {"label": "one owner", "any": ["one fontscaledpi owner", "exactly one owner"]},
+        {"label": "automatic docking option", "any": ["configdpiscalefonts can own", "configdpiscalefonts automatically"]},
+        {"label": "metric scaling", "any": ["scaleallsizes", "size and padding scaling"]},
+        {"label": "version verification", "any": ["version-notes.md", "vendored imgui.h", "vendored headers"]}
+      ],
+      "fatal": ["set both fontscaledpi and configdpiscalefonts"]
+    },
+    {
+      "id": "E06", "suite": "standard",
+      "prompt": "Our asset importer can emit null name, type, and status pointers. Make this ImGui row safe.",
+      "assertions": [
+        {"label": "blocks null API input", "any": ["never pass null", "do not pass null"]},
+        {"label": "names risky APIs", "all": ["strcmp", "selectable", "textunformatted", "%s"]},
+        {"label": "adapter or invariant", "any": ["safe display adapter", "non-null invariant"]},
+        {"label": "fallback", "any": ["fallback text", "<unnamed>", "unknown"]}
+      ]
+    },
+    {
+      "id": "E07", "suite": "standard",
+      "prompt": "When a command palette selects an asset, keyboard focus should move to it, but clicking a row must not steal focus every frame.",
+      "assertions": [
+        {"label": "separates interaction sources", "any": ["pointer selection separate", "separate pointer selection"]},
+        {"label": "one-shot pending ID", "any": ["pending stable id", "pending focus id", "one-shot"]},
+        {"label": "avoids repeated focus", "any": ["not every frame", "do not call setitemdefaultfocus for every selected row"]},
+        {"label": "verification", "any": ["test command-palette", "test both"]}
+      ]
+    },
+    {
+      "id": "E08", "suite": "standard",
+      "prompt": "Create a dark Dear ImGui theme with a strong blue accent and destructive actions.",
+      "assertions": [
+        {"label": "semantic tokens", "any": ["semantic tokens", "centralized tokens"]},
+        {"label": "interaction states", "all": ["normal", "hover", "active", "disabled"]},
+        {"label": "contrast", "any": ["4.5:1", "contrast"]},
+        {"label": "no scattered constants", "any": ["no scattered hard-coded", "avoid scattered hard-coded"]},
+        {"label": "version assumption", "any": ["version assumption", "imgui_version_num"]}
+      ]
+    },
+    {
+      "id": "E09", "suite": "standard",
+      "prompt": "Build a custom timeline scrubber with ImDrawList.",
+      "assertions": [
+        {"label": "standard-widget assessment", "any": ["first check whether standard widgets", "evaluate standard widgets first"]},
+        {"label": "identity and hit area", "all": ["stable id", "hit area"]},
+        {"label": "states", "all": ["hover", "active", "focus", "disabled"]},
+        {"label": "cancellation", "any": ["drag cancellation", "cancel drag"]},
+        {"label": "performance", "all": ["clipping", "performance"]},
+        {"label": "keyboard", "any": ["keyboard", "alternative interaction"]}
+      ]
+    },
+    {
+      "id": "E10", "suite": "standard",
+      "prompt": "I need the asset workspace to compile with a standard non-docking Dear ImGui build.",
+      "assertions": [
+        {"label": "guards docking", "any": ["guard docking-only api", "#if defined(imgui_has_dock)"]},
+        {"label": "fallback windows", "any": ["independent windows remain functional", "functional independent windows"]},
+        {"label": "no master assumption", "any": ["master does not guarantee imgui_has_dock", "master build does not guarantee"]}
+      ]
+    },
+    {
+      "id": "F01", "suite": "failure",
+      "prompt": "My Asset Browser's search box accepts input, but results often remain unchanged until I change sort order. The filtered vector is rebuilt only after clicking a table header.",
+      "assertions": [
+        {"label": "invalidates all inputs", "all": ["filter", "data", "sort-spec"]},
+        {"label": "derived view", "any": ["rebuild the derived index view", "invalidate the derived view"]},
+        {"label": "preserves source model", "any": ["do not reorder the source model", "without reordering the source model"]},
+        {"label": "empty state", "any": ["no-results", "no results"]},
+        {"label": "reproduction", "any": ["reproduction test", "test typing"]}
+      ]
+    },
+    {
+      "id": "F02", "suite": "failure",
+      "prompt": "After an importer refresh, clicking the inspector sometimes edits the wrong asset or crashes. I store Asset* selectedAsset and the importer replaces a std::vector<Asset>.",
+      "assertions": [
+        {"label": "stable selection ID", "any": ["store a stable asset id", "stable id in ui state"]},
+        {"label": "live resolution", "any": ["resolve the live object", "resolve it against the live model"]},
+        {"label": "missing selection", "any": ["missing selection", "clear selection safely"]},
+        {"label": "verification", "all": ["refresh", "deletion"]}
+      ],
+      "fatal": ["keep the asset*", "retain the pointer"]
+    },
+    {
+      "id": "F03", "suite": "failure",
+      "prompt": "I wrote: if (ImGui::BeginChild(\"Log\")) { DrawLog(); ImGui::EndChild(); } and now DebugCheckVersionAndDataLayout asserts intermittently.",
+      "assertions": [
+        {"label": "unconditional EndChild", "any": ["endchild outside the conditional", "endchild must always run"]},
+        {"label": "contract", "any": ["begin/end contract", "beginchild return value only controls contents"]},
+        {"label": "other scopes", "any": ["audit other scoped api", "check other scoped api"]},
+        {"label": "verification", "all": ["bundled checker", "runtime"]}
+      ],
+      "fatal": ["endchild only when beginchild returns true"]
+    },
+    {
+      "id": "F04", "suite": "failure",
+      "prompt": "Arrow-key navigation feels broken after I click any asset. I call SetItemDefaultFocus() whenever row.id == selectedAssetId.",
+      "assertions": [
+        {"label": "separates pointer and programmatic", "any": ["separate pointer selection", "pointer selection separate"]},
+        {"label": "one-shot stable ID", "any": ["pending stable id", "one-shot focus id"]},
+        {"label": "preserves navigation", "any": ["preserves keyboard navigation", "do not reassert focus every frame"]},
+        {"label": "verification", "all": ["command-palette", "pointer"]}
+      ]
+    },
+    {
+      "id": "F05", "suite": "failure",
+      "prompt": "At 200% DPI, text grows but rows stay cramped. On another monitor it grows again after every theme reload. Status colors are also different between the table and inspector.",
+      "assertions": [
+        {"label": "non-cumulative reset", "any": ["reset style before scaleallsizes", "reset style before non-cumulative scaling"]},
+        {"label": "one font owner", "any": ["exactly one fontscaledpi owner", "one fontscaledpi owner"]},
+        {"label": "font versus metrics", "any": ["font scaling from metric scaling", "font versus metric scaling"]},
+        {"label": "semantic status tokens", "any": ["centralize semantic status tokens", "centralized semantic status colors"]},
+        {"label": "two DPI tests", "any": ["100% and 200%", "two dpi values"]}
+      ],
+      "fatal": ["call scaleallsizes every frame", "two fontscaledpi owners"]
+    }
+  ]
+}

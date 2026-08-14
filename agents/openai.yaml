@@ -1,0 +1,15 @@
+interface:
+  display_name: "Dear ImGui UI/UX Engineering"
+  short_description: "Design, review, and harden production-quality Dear ImGui and C++ tool UIs"
+  default_prompt: >-
+    Use $imgui-ui-ux-engineering when the task names Dear ImGui or supplies direct evidence such
+    as `ImGui::`, `imgui.h`, `ImGuiContext`, or ImGui backend symbols. If a C++ editor/tooling
+    UI is unlabelled, keep framework choice open unless the user explicitly asks whether Dear
+    ImGui is suitable. Do not apply it to a task that explicitly names another UI framework.
+    First classify the work as a new workspace design, an existing-UI review, a component
+    implementation, or a theme/design-system task. Then apply the appropriate workflow:
+    specify task hierarchy and states for new designs; provide evidence, priority, correction,
+    and verification for reviews; define behavior, IDs, focus, error states, and performance
+    for components; or centralize semantic tokens, contrast, DPI, and interaction states for
+    themes. Verify version-sensitive APIs against the project's vendored Dear ImGui headers
+    and use the bundled quality harness when source is available.

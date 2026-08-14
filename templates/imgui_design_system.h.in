@@ -1,0 +1,174 @@
+#pragma once
+
+// Dear ImGui tool-interface theme starter.
+// Target: Dear ImGui 1.92.0 or newer. Verify every API against the exact vendored revision.
+// Call ApplyToolTheme() during initialization and whenever the host reports a DPI-scale change.
+// Do not call it every frame.
+
+#include "imgui.h"
+
+#include <algorithm>
+
+#if !defined(IMGUI_VERSION_NUM) || IMGUI_VERSION_NUM < 19200
+#  error "imgui_design_system.h requires Dear ImGui 1.92.0 or newer."
+#endif
+
+namespace ToolUi {
+
+struct Metrics {
+    float unit = 4.0f;
+    float radiusSmall = 4.0f;
+    float radiusMedium = 6.0f;
+    float border = 1.0f;
+
+    [[nodiscard]] ImVec2 framePadding() const { return {unit * 2.0f, unit * 1.35f}; }
+    [[nodiscard]] ImVec2 itemSpacing() const { return {unit * 1.5f, unit * 1.5f}; }
+    [[nodiscard]] ImVec2 cellPadding() const { return {unit * 2.0f, unit * 1.25f}; }
+};
+
+// Choose one owner for FontScaleDpi. On the docking branch, ConfigDpiScaleFonts can
+// automatically overwrite FontScaleDpi as windows move across monitors. In that mode,
+// select DearImGuiManagedFonts; this template still owns size and padding scaling.
+enum class FontDpiPolicy {
+    HostManagedFonts,
+    DearImGuiManagedFonts,
+};
+
+// Example dark palette. Validate brand colors and contrast against actual content.
+// Target at least 4.5:1 contrast for normal text and 3:1 for large text.
+struct Colors {
+    ImVec4 surfaceBase      = ImVec4(0.055f, 0.070f, 0.095f, 1.0f);
+    ImVec4 surfaceRaised    = ImVec4(0.080f, 0.100f, 0.135f, 1.0f);
+    ImVec4 surfaceOverlay   = ImVec4(0.115f, 0.140f, 0.185f, 1.0f);
+    ImVec4 borderSubtle     = ImVec4(0.190f, 0.225f, 0.280f, 0.72f);
+    ImVec4 borderStrong     = ImVec4(0.335f, 0.405f, 0.500f, 0.95f);
+    ImVec4 contentPrimary   = ImVec4(0.925f, 0.950f, 0.985f, 1.0f);
+    ImVec4 contentSecondary = ImVec4(0.655f, 0.710f, 0.790f, 1.0f);
+    ImVec4 contentDisabled  = ImVec4(0.410f, 0.455f, 0.520f, 1.0f);
+    ImVec4 accent           = ImVec4(0.235f, 0.635f, 1.000f, 1.0f);
+    ImVec4 accentHover      = ImVec4(0.370f, 0.720f, 1.000f, 1.0f);
+    ImVec4 accentActive     = ImVec4(0.130f, 0.480f, 0.890f, 1.0f);
+    // Filled controls use darker semantic surfaces so contentPrimary remains >= 4.5:1.
+    ImVec4 buttonSurface       = ImVec4(0.055f, 0.300f, 0.580f, 1.0f);
+    ImVec4 buttonSurfaceHover  = ImVec4(0.065f, 0.340f, 0.640f, 1.0f);
+    ImVec4 buttonSurfaceActive = ImVec4(0.040f, 0.250f, 0.500f, 1.0f);
+    ImVec4 success          = ImVec4(0.250f, 0.805f, 0.545f, 1.0f);
+    ImVec4 warning          = ImVec4(1.000f, 0.700f, 0.240f, 1.0f);
+    ImVec4 danger           = ImVec4(1.000f, 0.345f, 0.355f, 1.0f);
+    ImVec4 dangerSurface       = ImVec4(0.620f, 0.120f, 0.150f, 1.0f);
+    ImVec4 dangerSurfaceHover  = ImVec4(0.720f, 0.140f, 0.170f, 1.0f);
+    ImVec4 dangerSurfaceActive = ImVec4(0.520f, 0.090f, 0.120f, 1.0f);
+};
+
+// Reset to a known base before applying size scaling. This prevents cumulative scaling when
+// the display moves between monitors. The application should invoke this only at startup or
+// after a confirmed DPI change, with a positive host-provided content scale.
+inline void ApplyToolTheme(float dpiScale = 1.0f, const Metrics& metrics = {}, const Colors& c = {},
+                           FontDpiPolicy fontDpiPolicy = FontDpiPolicy::HostManagedFonts) {
+    const float effectiveDpiScale = std::clamp(dpiScale, 0.75f, 4.0f);
+    ImGuiStyle& style = ImGui::GetStyle();
+    // Preserve the docking branch's automatically managed font scale across the style reset.
+    // Restoring the observed value does not derive it from host dpiScale or create a second owner.
+    const float dearImGuiManagedFontScale = style.FontScaleDpi;
+    style = ImGuiStyle{};
+
+    style.WindowPadding = ImVec2(metrics.unit * 3.0f, metrics.unit * 3.0f);
+    style.FramePadding = metrics.framePadding();
+    style.CellPadding = metrics.cellPadding();
+    style.ItemSpacing = metrics.itemSpacing();
+    style.ItemInnerSpacing = ImVec2(metrics.unit * 1.5f, metrics.unit);
+    style.TouchExtraPadding = ImVec2(0.0f, 0.0f);
+    style.IndentSpacing = metrics.unit * 5.0f;
+    style.ScrollbarSize = metrics.unit * 3.5f;
+    style.GrabMinSize = metrics.unit * 2.75f;
+
+    style.WindowRounding = metrics.radiusMedium;
+    style.ChildRounding = metrics.radiusMedium;
+    style.FrameRounding = metrics.radiusSmall;
+    style.PopupRounding = metrics.radiusMedium;
+    style.ScrollbarRounding = metrics.radiusMedium;
+    style.GrabRounding = metrics.radiusSmall;
+    style.TabRounding = metrics.radiusSmall;
+    style.WindowBorderSize = metrics.border;
+    style.ChildBorderSize = metrics.border;
+    style.PopupBorderSize = metrics.border;
+    style.FrameBorderSize = 0.0f;
+    style.TabBorderSize = 0.0f;
+    style.WindowMenuButtonPosition = ImGuiDir_Right;
+    style.ColorButtonPosition = ImGuiDir_Right;
+    style.ButtonTextAlign = ImVec2(0.5f, 0.5f);
+    style.SelectableTextAlign = ImVec2(0.0f, 0.5f);
+
+    ImVec4* colors = style.Colors;
+    colors[ImGuiCol_Text] = c.contentPrimary;
+    colors[ImGuiCol_TextDisabled] = c.contentDisabled;
+    colors[ImGuiCol_WindowBg] = c.surfaceBase;
+    colors[ImGuiCol_ChildBg] = c.surfaceBase;
+    colors[ImGuiCol_PopupBg] = c.surfaceOverlay;
+    colors[ImGuiCol_Border] = c.borderSubtle;
+    colors[ImGuiCol_BorderShadow] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+    colors[ImGuiCol_FrameBg] = c.surfaceRaised;
+    colors[ImGuiCol_FrameBgHovered] = c.surfaceOverlay;
+    colors[ImGuiCol_FrameBgActive] = c.borderStrong;
+    colors[ImGuiCol_TitleBg] = c.surfaceBase;
+    colors[ImGuiCol_TitleBgActive] = c.surfaceRaised;
+    colors[ImGuiCol_MenuBarBg] = c.surfaceRaised;
+    colors[ImGuiCol_ScrollbarBg] = c.surfaceBase;
+    colors[ImGuiCol_ScrollbarGrab] = c.borderSubtle;
+    colors[ImGuiCol_ScrollbarGrabHovered] = c.borderStrong;
+    colors[ImGuiCol_ScrollbarGrabActive] = c.accentActive;
+    colors[ImGuiCol_CheckMark] = c.accent;
+    colors[ImGuiCol_SliderGrab] = c.accent;
+    colors[ImGuiCol_SliderGrabActive] = c.accentHover;
+    colors[ImGuiCol_Button] = c.buttonSurface;
+    colors[ImGuiCol_ButtonHovered] = c.buttonSurfaceHover;
+    colors[ImGuiCol_ButtonActive] = c.buttonSurfaceActive;
+    colors[ImGuiCol_Header] = ImVec4(c.accent.x, c.accent.y, c.accent.z, 0.22f);
+    colors[ImGuiCol_HeaderHovered] = ImVec4(c.accent.x, c.accent.y, c.accent.z, 0.42f);
+    colors[ImGuiCol_HeaderActive] = ImVec4(c.accent.x, c.accent.y, c.accent.z, 0.64f);
+    colors[ImGuiCol_Separator] = c.borderSubtle;
+    colors[ImGuiCol_SeparatorHovered] = c.accentHover;
+    colors[ImGuiCol_SeparatorActive] = c.accent;
+    colors[ImGuiCol_ResizeGrip] = ImVec4(c.accent.x, c.accent.y, c.accent.z, 0.18f);
+    colors[ImGuiCol_ResizeGripHovered] = ImVec4(c.accent.x, c.accent.y, c.accent.z, 0.55f);
+    colors[ImGuiCol_ResizeGripActive] = c.accent;
+    colors[ImGuiCol_Tab] = c.surfaceRaised;
+    colors[ImGuiCol_TabHovered] = c.surfaceOverlay;
+    colors[ImGuiCol_TabSelected] = c.accentActive;
+    colors[ImGuiCol_TabSelectedOverline] = c.accent;
+#if defined(IMGUI_HAS_DOCK)
+    colors[ImGuiCol_DockingPreview] = ImVec4(c.accent.x, c.accent.y, c.accent.z, 0.60f);
+#endif
+    colors[ImGuiCol_TableHeaderBg] = c.surfaceRaised;
+    colors[ImGuiCol_TableBorderStrong] = c.borderStrong;
+    colors[ImGuiCol_TableBorderLight] = c.borderSubtle;
+    colors[ImGuiCol_TableRowBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+    colors[ImGuiCol_TableRowBgAlt] = ImVec4(c.surfaceRaised.x, c.surfaceRaised.y, c.surfaceRaised.z, 0.42f);
+    colors[ImGuiCol_TextSelectedBg] = ImVec4(c.accent.x, c.accent.y, c.accent.z, 0.35f);
+    colors[ImGuiCol_NavCursor] = c.accentHover;
+    colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.55f);
+
+    // Dear ImGui 1.92+ supports FontScaleDpi for fonts and ScaleAllSizes() for
+    // paddings, hit regions, borders, and related style metrics. Do not write
+    // FontScaleDpi here when the docking branch's ConfigDpiScaleFonts owns it.
+    if (fontDpiPolicy == FontDpiPolicy::HostManagedFonts)
+        style.FontScaleDpi = effectiveDpiScale;
+    else
+        style.FontScaleDpi = dearImGuiManagedFontScale;
+    style.ScaleAllSizes(effectiveDpiScale);
+}
+
+inline bool PrimaryButton(const char* label, const ImVec2& size = ImVec2(0.0f, 0.0f)) {
+    return ImGui::Button(label, size);
+}
+
+inline bool DangerButton(const char* label, const Colors& c, const ImVec2& size = ImVec2(0.0f, 0.0f)) {
+    ImGui::PushStyleColor(ImGuiCol_Button, c.dangerSurface);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, c.dangerSurfaceHover);
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, c.dangerSurfaceActive);
+    const bool clicked = ImGui::Button(label, size);
+    ImGui::PopStyleColor(3);
+    return clicked;
+}
+
+} // namespace ToolUi

@@ -1,0 +1,404 @@
+// Dear ImGui tool-workspace starter.
+// Target: Dear ImGui 1.92.0 or newer; docking is optional and guarded below.
+// Include the copied imgui_design_system.h template before compiling this file.
+// Call DrawToolWorkspace() between ImGui::NewFrame() and ImGui::Render().
+
+#include "imgui.h"
+#include "imgui_design_system.h"
+
+#if !defined(IMGUI_VERSION_NUM) || IMGUI_VERSION_NUM < 19200
+#  error "imgui_panel_skeleton.cpp requires Dear ImGui 1.92.0 or newer."
+#endif
+
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <vector>
+
+struct Asset {
+    int id = 0; // Stable application-model identifier.
+    // Nullable display strings are tolerated by this template; rendering uses SafeText().
+    const char* name = "";
+    const char* type = "";
+    const char* status = "";
+    bool editable = true;
+    float exposure = 1.0f;
+};
+
+enum AssetColumnId : ImGuiID {
+    AssetColumnId_Name = 1,
+    AssetColumnId_Type,
+    AssetColumnId_Status,
+};
+
+struct ToolUiState {
+    int selectedAssetId = -1;
+    // Set only when a command, hierarchy action, or other explicit navigation asks to move focus.
+    int pendingKeyboardFocusAssetId = -1;
+    char assetFilter[128] = "";
+    bool showLog = true;
+    bool showInspector = true;
+    bool showMetrics = false;
+
+    // The host must call MarkAssetViewDirty() after adding/removing assets or changing
+    // any value that participates in filtering or sorting.
+    bool assetViewDirty = true;
+    std::vector<int> filteredSortedAssetIndices;
+};
+
+inline void MarkAssetViewDirty(ToolUiState& ui) {
+    ui.assetViewDirty = true;
+}
+
+// Use this helper for programmatic selection that must also enter keyboard navigation.
+// Ordinary pointer selection does not need a forced default-focus request.
+inline void RequestAssetSelection(ToolUiState& ui, int assetId, bool requestKeyboardFocus = false) {
+    ui.selectedAssetId = assetId;
+    ui.pendingKeyboardFocusAssetId = requestKeyboardFocus ? assetId : -1;
+}
+
+static const char* SafeText(const char* value, const char* fallback = "") {
+    return value != nullptr && value[0] != '\0' ? value : fallback;
+}
+
+static Asset* FindAsset(std::vector<Asset>& assets, int id) {
+    for (Asset& asset : assets)
+        if (asset.id == id)
+            return &asset;
+    return nullptr;
+}
+
+static bool ContainsCaseInsensitive(const char* haystack, const char* needle) {
+    if (needle == nullptr || needle[0] == '\0')
+        return true;
+    if (haystack == nullptr)
+        return false;
+
+    for (const char* start = haystack; *start != '\0'; ++start) {
+        const char* h = start;
+        const char* n = needle;
+        while (*h != '\0' && *n != '\0' &&
+               std::tolower(static_cast<unsigned char>(*h)) == std::tolower(static_cast<unsigned char>(*n))) {
+            ++h;
+            ++n;
+        }
+        if (*n == '\0')
+            return true;
+    }
+    return false;
+}
+
+static bool AssetMatchesFilter(const Asset& asset, const char* filter) {
+    return ContainsCaseInsensitive(asset.name, filter) ||
+           ContainsCaseInsensitive(asset.type, filter) ||
+           ContainsCaseInsensitive(asset.status, filter);
+}
+
+static int CompareTextCaseInsensitive(const char* left, const char* right) {
+    left = left != nullptr ? left : "";
+    right = right != nullptr ? right : "";
+    while (*left != '\0' && *right != '\0') {
+        const int a = std::tolower(static_cast<unsigned char>(*left));
+        const int b = std::tolower(static_cast<unsigned char>(*right));
+        if (a != b)
+            return a < b ? -1 : 1;
+        ++left;
+        ++right;
+    }
+    if (*left == *right)
+        return 0;
+    return *left == '\0' ? -1 : 1;
+}
+
+static int CompareAssets(const Asset& left, const Asset& right, ImGuiID columnId) {
+    switch (columnId) {
+    case AssetColumnId_Type:
+        return CompareTextCaseInsensitive(left.type, right.type);
+    case AssetColumnId_Status:
+        return CompareTextCaseInsensitive(left.status, right.status);
+    case AssetColumnId_Name:
+    default:
+        return CompareTextCaseInsensitive(left.name, right.name);
+    }
+}
+
+static void RebuildAssetView(ToolUiState& ui, const std::vector<Asset>& assets,
+                             const ImGuiTableSortSpecs* sortSpecs) {
+    ui.filteredSortedAssetIndices.clear();
+    ui.filteredSortedAssetIndices.reserve(assets.size());
+
+    for (int index = 0; index < static_cast<int>(assets.size()); ++index) {
+        if (AssetMatchesFilter(assets[index], ui.assetFilter))
+            ui.filteredSortedAssetIndices.push_back(index);
+    }
+
+    const ImGuiID sortColumn = (sortSpecs != nullptr && sortSpecs->SpecsCount > 0)
+        ? sortSpecs->Specs[0].ColumnUserID
+        : AssetColumnId_Name;
+    const ImGuiSortDirection sortDirection = (sortSpecs != nullptr && sortSpecs->SpecsCount > 0)
+        ? sortSpecs->Specs[0].SortDirection
+        : ImGuiSortDirection_Ascending;
+
+    std::sort(ui.filteredSortedAssetIndices.begin(), ui.filteredSortedAssetIndices.end(),
+              [&assets, sortColumn, sortDirection](int leftIndex, int rightIndex) {
+                  const int comparison = CompareAssets(assets[leftIndex], assets[rightIndex], sortColumn);
+                  if (comparison == 0)
+                      return assets[leftIndex].id < assets[rightIndex].id; // Stable tie-breaker.
+                  return sortDirection == ImGuiSortDirection_Descending ? comparison > 0 : comparison < 0;
+              });
+    ui.assetViewDirty = false;
+}
+
+static const ImVec4& StatusColor(const Asset& asset, const ToolUi::Colors& colors) {
+    const char* status = SafeText(asset.status);
+    if (std::strcmp(status, "Ready") == 0 || std::strcmp(status, "Healthy") == 0)
+        return colors.success;
+    if (std::strcmp(status, "Warning") == 0 || std::strcmp(status, "Pending") == 0)
+        return colors.warning;
+    if (std::strcmp(status, "Failed") == 0 || std::strcmp(status, "Error") == 0)
+        return colors.danger;
+    return colors.contentSecondary;
+}
+
+static void DrawMainMenu(ToolUiState& ui) {
+    if (!ImGui::BeginMainMenuBar())
+        return;
+
+    if (ImGui::BeginMenu("File")) {
+        if (ImGui::MenuItem("Import…", "Ctrl+I")) {
+            // DispatchImportCommand();
+        }
+        if (ImGui::MenuItem("Save Workspace", "Ctrl+S")) {
+            // DispatchSaveWorkspaceCommand();
+        }
+        ImGui::Separator();
+        if (ImGui::MenuItem("Quit", "Alt+F4")) {
+            // DispatchQuitCommand();
+        }
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("View")) {
+        ImGui::MenuItem("Inspector", nullptr, &ui.showInspector);
+        ImGui::MenuItem("Activity Log", nullptr, &ui.showLog);
+        ImGui::MenuItem("Metrics", nullptr, &ui.showMetrics);
+        ImGui::EndMenu();
+    }
+
+    ImGui::Separator();
+    ImGui::TextDisabled("Workspace");
+    ImGui::SameLine();
+    ImGui::TextUnformatted("Production");
+    ImGui::SameLine();
+    ImGui::TextDisabled("• Saved");
+    ImGui::EndMainMenuBar();
+}
+
+static void DrawAssetBrowser(ToolUiState& ui, std::vector<Asset>& assets, const ToolUi::Colors& colors) {
+    if (!ImGui::Begin("Assets##panel")) {
+        ImGui::End();
+        return;
+    }
+
+    ImGui::SetNextItemWidth(-1.0f);
+    if (ImGui::InputTextWithHint("##asset-filter", "Filter assets…", ui.assetFilter, IM_ARRAYSIZE(ui.assetFilter)))
+        MarkAssetViewDirty(ui);
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Filter by name, type, or status");
+
+    ImGui::Spacing();
+    ImGui::TextDisabled("%d assets", static_cast<int>(assets.size()));
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Clear##asset-filter") && ui.assetFilter[0] != '\0') {
+        ui.assetFilter[0] = '\0';
+        MarkAssetViewDirty(ui);
+    }
+
+    const ImGuiTableFlags tableFlags =
+        ImGuiTableFlags_RowBg |
+        ImGuiTableFlags_BordersOuterV |
+        ImGuiTableFlags_BordersInnerH |
+        ImGuiTableFlags_Resizable |
+        ImGuiTableFlags_Reorderable |
+        ImGuiTableFlags_Hideable |
+        ImGuiTableFlags_Sortable |
+        ImGuiTableFlags_ScrollY |
+        ImGuiTableFlags_SizingStretchProp;
+
+    if (ImGui::BeginTable("AssetsTable##assets", 3, tableFlags, ImVec2(0.0f, 0.0f))) {
+        ImGui::TableSetupScrollFreeze(0, 1);
+        ImGui::TableSetupColumn("Asset", ImGuiTableColumnFlags_DefaultSort | ImGuiTableColumnFlags_WidthStretch,
+                                0.58f, AssetColumnId_Name);
+        ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthStretch, 0.22f, AssetColumnId_Type);
+        ImGui::TableSetupColumn("Status", ImGuiTableColumnFlags_WidthStretch, 0.20f, AssetColumnId_Status);
+        ImGui::TableHeadersRow();
+
+        ImGuiTableSortSpecs* sortSpecs = ImGui::TableGetSortSpecs();
+        const bool sortChanged = sortSpecs != nullptr && sortSpecs->SpecsDirty;
+        if (ui.assetViewDirty || sortChanged)
+            RebuildAssetView(ui, assets, sortSpecs);
+        if (sortSpecs != nullptr)
+            sortSpecs->SpecsDirty = false;
+
+        ImGuiListClipper clipper;
+        clipper.Begin(static_cast<int>(ui.filteredSortedAssetIndices.size()));
+        if (ui.pendingKeyboardFocusAssetId >= 0) {
+            int focusRow = -1;
+            for (int row = 0; row < static_cast<int>(ui.filteredSortedAssetIndices.size()); ++row) {
+                if (assets[ui.filteredSortedAssetIndices[row]].id == ui.pendingKeyboardFocusAssetId) {
+                    focusRow = row;
+                    break;
+                }
+            }
+            if (focusRow >= 0)
+                clipper.IncludeItemByIndex(focusRow);
+            else
+                ui.pendingKeyboardFocusAssetId = -1; // Deleted or excluded by the active filter.
+        }
+        while (clipper.Step()) {
+            for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; ++row) {
+                Asset& asset = assets[ui.filteredSortedAssetIndices[row]];
+                const bool selected = (asset.id == ui.selectedAssetId);
+                ImGui::PushID(asset.id);
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                const ImGuiSelectableFlags selectableFlags =
+                    ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap;
+                if (ImGui::Selectable(SafeText(asset.name, "<Unnamed asset>"), selected, selectableFlags))
+                    RequestAssetSelection(ui, asset.id);
+                if (ui.pendingKeyboardFocusAssetId == asset.id) {
+                    ImGui::SetItemDefaultFocus();
+                    ImGui::SetScrollHereY(0.5f);
+                    ui.pendingKeyboardFocusAssetId = -1;
+                }
+
+                ImGui::TableSetColumnIndex(1);
+                ImGui::TextUnformatted(SafeText(asset.type, "Unknown"));
+                ImGui::TableSetColumnIndex(2);
+                ImGui::TextColored(StatusColor(asset, colors), "%s", SafeText(asset.status, "Unknown"));
+                ImGui::PopID();
+            }
+        }
+
+        if (ui.filteredSortedAssetIndices.empty()) {
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::TextDisabled("No assets match the active filter.");
+        }
+        ImGui::EndTable();
+    }
+
+    ImGui::End();
+}
+
+static void DrawInspector(ToolUiState& ui, std::vector<Asset>& assets) {
+    if (!ImGui::Begin("Inspector##panel", &ui.showInspector)) {
+        ImGui::End();
+        return;
+    }
+
+    Asset* selected = FindAsset(assets, ui.selectedAssetId);
+    if (selected == nullptr) {
+        ImGui::TextDisabled("No asset selected");
+        ImGui::TextWrapped("Select an asset from the browser to inspect and edit its properties.");
+        ImGui::End();
+        return;
+    }
+
+    ImGui::TextUnformatted(SafeText(selected->name, "<Unnamed asset>"));
+    ImGui::SameLine();
+    ImGui::TextDisabled("%s", SafeText(selected->type, "Unknown"));
+    ImGui::Separator();
+
+    if (ImGui::CollapsingHeader("Rendering", ImGuiTreeNodeFlags_DefaultOpen)) {
+        if (!selected->editable) {
+            ImGui::BeginDisabled();
+            ImGui::TextDisabled("This asset is locked by its source.");
+        }
+
+        if (ImGui::BeginTable("InspectorFields##rendering", 2,
+                              ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersInnerV)) {
+            ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthFixed, 104.0f);
+            ImGui::TableSetupColumn("Control", ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted("Exposure");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::SetNextItemWidth(-1.0f);
+            if (ImGui::DragFloat("##exposure", &selected->exposure, 0.05f, -8.0f, 8.0f, "%.2f EV")) {
+                // DispatchSetExposurePreview(selected->id, selected->exposure);
+            }
+            if (ImGui::IsItemDeactivatedAfterEdit()) {
+                // DispatchSetExposureCommandForUndo(selected->id, selected->exposure);
+            }
+            ImGui::EndTable();
+        }
+
+        if (!selected->editable)
+            ImGui::EndDisabled();
+    }
+
+    ImGui::Spacing();
+    if (ImGui::Button("Reveal in Browser")) {
+        // NavigateToAsset(selected->id);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Reset to Default")) {
+        // DispatchResetAssetCommand(selected->id);
+    }
+
+    ImGui::End();
+}
+
+static void DrawActivityLog(ToolUiState& ui, const ToolUi::Colors& colors) {
+    if (!ui.showLog)
+        return;
+
+    if (!ImGui::Begin("Activity##panel", &ui.showLog)) {
+        ImGui::End();
+        return;
+    }
+
+    ImGui::TextColored(colors.success, "Ready");
+    ImGui::SameLine();
+    ImGui::TextDisabled("Workspace loaded successfully.");
+    ImGui::TextDisabled("14:32:09");
+    ImGui::SameLine();
+    ImGui::TextUnformatted("Shader cache refreshed (32 entries).");
+    ImGui::End();
+}
+
+static void DrawMetrics(ToolUiState& ui) {
+    if (!ui.showMetrics)
+        return;
+
+    if (!ImGui::Begin("Metrics##panel", &ui.showMetrics)) {
+        ImGui::End();
+        return;
+    }
+
+    ImGui::TextDisabled("Frame time");
+    const float frameRate = ImGui::GetIO().Framerate;
+    if (frameRate > 0.0f)
+        ImGui::Text("%.2f ms", 1000.0f / frameRate);
+    else
+        ImGui::TextDisabled("Collecting frame data\xE2\x80\xA6");
+    ImGui::Separator();
+    ImGui::TextDisabled("Use application metrics, not only UI frame rate, for production profiling.");
+    ImGui::End();
+}
+
+void DrawToolWorkspace(ToolUiState& ui, std::vector<Asset>& assets, const ToolUi::Colors& colors) {
+    // DockSpaceOverViewport is only available in a docking-enabled Dear ImGui build.
+#if defined(IMGUI_HAS_DOCK)
+    ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), ImGuiDockNodeFlags_None);
+#endif
+
+    DrawMainMenu(ui);
+    DrawAssetBrowser(ui, assets, colors);
+    DrawInspector(ui, assets);
+    DrawActivityLog(ui, colors);
+    DrawMetrics(ui);
+}

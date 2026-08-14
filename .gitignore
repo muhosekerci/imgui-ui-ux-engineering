@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+.imgui-skill-compile-*/
+.imgui-skill-official-*/
+.DS_Store
+Thumbs.db
