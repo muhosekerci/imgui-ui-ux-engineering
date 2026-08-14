@@ -44,9 +44,35 @@ GTK, WPF, wxWidgets, JUCE, or Slate.
 
 ## Quick start
 
-1. Clone or copy this repository into the skills directory used by your Codex setup.
-2. Reload Codex so it discovers `SKILL.md`.
-3. Invoke the skill by name or submit a Dear ImGui task:
+### Install on Windows PowerShell
+
+```powershell
+$codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME ".codex" }
+git clone https://github.com/muhosekerci/imgui-ui-ux-engineering.git `
+  (Join-Path $codexHome "skills\imgui-ui-ux-engineering")
+```
+
+### Install on macOS or Linux
+
+```bash
+git clone https://github.com/muhosekerci/imgui-ui-ux-engineering.git \
+  "${CODEX_HOME:-$HOME/.codex}/skills/imgui-ui-ux-engineering"
+```
+
+If your Codex setup uses a custom skills directory, clone the repository there instead.
+Reload Codex after installation so it discovers `SKILL.md`.
+
+### Update an existing installation
+
+```bash
+git -C "${CODEX_HOME:-$HOME/.codex}/skills/imgui-ui-ux-engineering" pull
+```
+
+On Windows PowerShell, replace the path with the value created in the installation step.
+
+### Use the skill
+
+Invoke the skill by name or submit a Dear ImGui task:
 
 ```text
 $imgui-ui-ux-engineering review this asset browser for ID collisions,
@@ -62,6 +88,27 @@ single selection, a property inspector, and a collapsible activity log.
 Review this ImGui C++ panel and return Critical / High / Medium / Low
 findings with fixes and verification steps.
 ```
+
+## Discoverability and sharing
+
+If this project helps your workflow, star the repository and share the direct link:
+
+```text
+https://github.com/muhosekerci/imgui-ui-ux-engineering
+```
+
+Good places to introduce the skill include:
+
+- the [`codex-skills` GitHub topic](https://github.com/topics/codex-skills);
+- the [Awesome Codex Skills](https://github.com/ComposioHQ/awesome-codex-skills) list through a contribution or pull request;
+- the [Dear ImGui Discussions](https://github.com/ocornut/imgui/discussions) community;
+- relevant Reddit communities such as `r/codex`, `r/OpenaiCodex`, and `r/imgui`;
+- developer posts on DEV Community, Hashnode, LinkedIn, X, or a Show HN submission;
+- C++ game-tooling, engine-development, editor-tooling, and technical-art communities.
+
+When sharing, include one screenshot or short GIF, three example prompts, the 30/30 semantic
+eval result, and the one-command installation snippet above. This makes the purpose and value
+of the skill understandable without requiring readers to inspect the repository first.
 
 ## Expected deliverables
 
