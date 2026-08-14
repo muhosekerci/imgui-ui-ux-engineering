@@ -243,6 +243,12 @@ Custom draw-list controls also require more work than built-in widgets: define t
 hit area, interaction states, keyboard path, cancellation behavior, clipping, and semantic
 representation before implementation.
 
+## License
+
+Released under the [MIT License](LICENSE).
+
+Copyright (c) 2026 [muhosekerci](https://github.com/muhosekerci).
+
 ## References
 
 - [Dear ImGui repository](https://github.com/ocornut/imgui)

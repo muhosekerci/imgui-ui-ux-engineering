@@ -37,6 +37,7 @@ SEMANTIC_CASES = SKILL_DIR / "evals" / "semantic-cases.json"
 SEMANTIC_RESPONSES = SKILL_DIR / "evals" / "fixtures" / "reference-responses.json"
 SEMANTIC_RUNNER = SKILL_DIR / "scripts" / "run_semantic_suite.py"
 REQUIRED_FILES = (
+    SKILL_DIR / "LICENSE",
     SKILL_DIR / "README.md",
     SKILL_DIR / "SKILL.md",
     SKILL_DIR / "agents" / "openai.yaml",
