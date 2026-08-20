@@ -79,12 +79,6 @@ The Skills CLI detects supported coding agents and installs the skill into the a
 location. This gives the same repository package to compatible clients such as Claude Code,
 Codex, Antigravity CLI, GitHub Copilot CLI, OpenCode, Cursor, and other Agent Skills clients.
 
-For a global, non-interactive installation:
-
-```bash
-npx skills add muhosekerci/imgui-ui-ux-engineering -g -y
-```
-
 ### Manual universal installation (`.agents/skills`)
 
 The shared `.agents/skills` location is recognized by multiple compatible clients,
